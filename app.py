@@ -41,22 +41,14 @@ if arquivos_pdf:
                     pdf_bytes = file_input.read()
                     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
                     pagina = doc.load_page(0)
-                    
-                    # --- CORTE DA PÁGINA (Pega apenas o topo) ---
                     rect = pagina.rect 
-                    # Limitamos em 25% da altura (0.25) para focar só na Ordem e ignorar o resto da folha A4
                     area_cabecalho = fitz.Rect(rect.x0, rect.y0, rect.x1, rect.y1 * 0.25)
-                    
-                    # --- RENDERIZAÇÃO LEVE ---
-                    # Matrix(1.0, 1.0) gera uma imagem leve e o 'clip' garante que só o topo vire imagem
                     pix = pagina.get_pixmap(matrix=fitz.Matrix(1.0, 1.0), clip=area_cabecalho)
                     img_data = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w, pix.n)
-                    
-                    # O OCR roda instantaneamente porque a imagem é bem pequena
                     resultado = reader.readtext(img_data, detail=0)
                     texto_todo = " ".join(resultado)
                     
-                    # Busca pelo número de 7 ou 8 dígitos da Ordem
+                    # Busca pelo número
                     busca = re.search(r'\b(\d{7,8})\b', texto_todo)
                     
                     if busca:
@@ -71,7 +63,7 @@ if arquivos_pdf:
                 except Exception as e:
                     st.error(f"Erro no arquivo {file_input.name}: {e}")
                 
-                # Atualiza a barra de progresso na tela do navegador
+                # Atualiza a barra de progresso 
                 percentual = (i + 1) / len(arquivos_pdf)
                 progresso.progress(percentual)
                 status_text.text(f"Processando: {i+1} de {len(arquivos_pdf)}")
